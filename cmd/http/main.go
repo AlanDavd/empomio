@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/alandavd/empomio/config"
+	"github.com/alandavd/empomio/internal/config"
 )
 
 func main() {
