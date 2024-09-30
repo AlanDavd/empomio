@@ -57,6 +57,9 @@ func main() {
 	server := &http.Server{
 		Addr:    config.ServerAddress(),
 		Handler: router,
+		ReadTimeout: 30 * time.Second,
+		ReadHeaderTimeout: 30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	// Initializing the server in a goroutine so that it won't block the graceful
