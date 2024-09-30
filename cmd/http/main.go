@@ -11,12 +11,53 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/alandavd/empomio/internal/config"
+	"github.com/alandavd/empomio/internal/adapters/repositories"
+	"github.com/alandavd/empomio/internal/adapters/repositories/postgres"
+	"github.com/alandavd/empomio/internal/core/services"
+	"github.com/alandavd/empomio/internal/adapters/handlers"
 )
 
 func main() {
+	log.Println("Starting server")
+
+	log.Println("Loading configuration")
 	config := config.LoadConfigFlags()
 
-	server := createServer(config)
+	log.Println("Loading database")
+	conn, err := postgres.NewPostgresDB(context.Background(), config)
+	if err != nil {
+		log.Fatalf("could not connect to database: %s\n", err)
+	}
+	_= conn
+
+	log.Println("Loading repositories")
+	userRepo, err := repositories.NewUserRepository()
+	if err != nil {
+		log.Fatalf("could not load user repo: %s\n", err)
+	}
+
+	log.Println("Loading services")
+	userService := services.NewUserService(userRepo)
+
+	log.Println("Loading handlers")
+	userHandler := handlers.NewUserHandler(*userService)
+
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gin.Logger())
+
+	v1 := router.Group("/v1")
+
+	router.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "Welcome Gin Server")
+	})
+
+	v1.GET("/users", userHandler.CreateUser)
+
+	server := &http.Server{
+		Addr:    config.ServerAddress(),
+		Handler: router,
+	}
 
 	// Initializing the server in a goroutine so that it won't block the graceful
 	// shutdown handling below.
@@ -46,18 +87,4 @@ func main() {
 	}
 
 	log.Println("Server exiting")
-}
-
-func createServer(con config.Config) *http.Server {
-	router := gin.Default()
-
-	router.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Welcome Gin Server")
-	})
-
-	srv := &http.Server{
-		Addr:    con.ServerAddress(),
-		Handler: router,
-	}
-	return srv
 }
