@@ -9,6 +9,14 @@ Setup private repositories for Golang
 
 ## Run
 
+Docker for local development
+
+```bash
+docker-compose up
+```
+
+Run server
+
 ```bash
 # Without flags
 go run cmd/http/main.go
